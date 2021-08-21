@@ -1,99 +1,105 @@
-import React, {useState} from 'react';
-import {useDispatch, useSelector} from 'react-redux';
-import _ from 'lodash';
-import {GetPokemonList} from '../actions';
-import {Link} from 'react-router-dom';
-import {View} from 'react-native';
-import axios from 'axios';
-// import ReactPaginate from "react-paginate";
+import React, {useState, useEffect} from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  Image,
+  TouchableOpacity,
+  StyleSheet,
+  TextInput,
+  SafeAreaView,
+} from 'react-native';
 
-const PokemonList = props => {
-  const [search, setSearch] = useState('');
-  const dispatch = useDispatch();
-  const pokemonList = useSelector(state => state.PokemonList);
-  React.useEffect(() => {
-    FetchData(1);
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
+const PokemonList = ({navigation}) => {
+  const [pokemons, setPokemons] = useState([]);
+  const [searchfeild, setSearchfeild] = useState('');
+  useEffect(() => {
+    fetchPokemons();
   }, []);
-
-  const FetchData = (page = 1) => {
-    dispatch(GetPokemonList(page));
-  };
-const getPokemon = async () => {
-    try {
-        dispatch({
-          type: "POKEMON_MULTIPLE_LOADING"
-        });
-    
-        const res = await axios.get(`https://pokeapi.co/api/v2/pokemon/${pokemon}`);
-    
-        dispatch({
-          type: "POKEMON_MULTIPLE_SUCCESS",
-          payload: res.data,
-          pokemonName: pokemon
-        })
-      } catch (e) {
-        dispatch({
-          type: "POKEMON_MULTIPLE_FAIL",
-        })
-      }
- }
-  const ShowData = () => {
-    if (pokemonList.loading) {
-      return <p>Loading...</p>;
-    }
-
-    if (!_.isEmpty(pokemonList.data)) {
-      return (
-        <View>
-          {pokemonList.data.map(el => {
-            return (
-              <View>
-                <p>{el.name}</p>
-                <Link to={`/pokemon/${el.name}`}>View</Link>
-              </View>
-            );
-          })}
-        </View>
-      );
-    }
-
-    if (pokemonList.errorMsg !== '') {
-      return <p>{pokemonList.errorMsg}</p>;
-    }
-
-    return <p>unable to get data</p>;
+  const fetchPokemons = () => {
+    fetch('https://pokeapi.co/api/v2/pokemon?limit=500')
+      .then(response => response.json())
+      .then(pokemons => setPokemons(pokemons.results));
   };
 
   return (
+    <SafeAreaView>
+      
     <View>
-      {/* <View >
-        <p>Search: </p>
-        <input type="text" onChange={e => setSearch(e.target.value)}/>
-        <button onClick={() => props.history.push(`/pokemon/${search}`)}>Search</button>
-      </View> */}
-      {/* {ShowData()} */}
-      {/* {!_.isEmpty(pokemonList.data) && (
-        <ReactPaginate
-          pageCount={Math.ceil(pokemonList.count / 15)}
-          pageRangeDisplayed={2}
-          marginPagesDisplayed={1}
-          onPageChange={(data) => FetchData(data.selected + 1)}
-          containerClassName={"pagination"}
+      <View style={styles.searchCont}>
+        <TextInput
+          style={styles.searchfeild}
+          placeholder="Search Pokemons"
+          onChangeText={value => setSearchfeild(value)}
+          value={searchfeild}
         />
-      )} */}
-
-      <View>
-        {(pokemonList.data || []).map(el => {
-          return (
-            <View>
-              <p>{el.name}</p>
-              {/* <Link to={`/pokemon/${el.name}`}>View</Link> */}
-            </View>
-          );
-        })}
       </View>
+      <ScrollView>
+        <View style={styles.container}>
+          {pokemons
+            .filter(pokemon =>
+              pokemon.name.toLowerCase().includes(searchfeild.toLowerCase())
+            )
+            .map((pokemon, index) => {
+              return (
+                <TouchableOpacity
+                  activeOpacity={0.5}
+                  key={index}
+                  style={styles.card}
+                  onPress={() => navigation.push('Details')}>
+                  <Image
+                    style={{width: 150, height: 150}}
+                    source={{
+                      uri: `https://img.pokemondb.net/sprites/omega-ruby-alpha-sapphire/dex/normal/${
+                        pokemon.name
+                      }.png`,
+                    }}
+                  />
+                  <Text>{pokemon.name}</Text>
+                </TouchableOpacity>
+              );
+            })}
+        </View>
+      </ScrollView>
     </View>
+
+    </SafeAreaView>
   );
 };
-
 export default PokemonList;
+
+const styles = StyleSheet.create({
+  container: {
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    marginTop: 30,
+  },
+  card: {
+    display: 'flex',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: 'black',
+    marginHorizontal: 20,
+    marginVertical: 10,
+  },
+  searchCont: {
+    position: 'absolute',
+    marginBottom: 70,
+    left: '20%',
+    zIndex: 1,
+    marginTop: 10,
+  },
+  searchfeild: {
+    height: 40,
+    borderWidth: 1,
+    borderColor: '#000',
+    textAlign: 'center',
+    width: 250,
+    borderRadius: 50,
+  },
+});

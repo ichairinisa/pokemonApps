@@ -1,9 +1,27 @@
-import {createStore} from "redux";
-import {composeWithDevTools} from "redux-devtools-extension";
-import {applyMiddleware} from "redux";
-import thunk from "redux-thunk";
-import RootReducer from "./reducers";
+import {createStore} from 'redux';
 
-const Store = createStore(RootReducer, composeWithDevTools(applyMiddleware(thunk)));
+const initialState = {
+  loading: false,
+  name: 'Hairinisa Pratiwi',
+  address: 'Bintaro',
+};
 
-export default Store
+const reducer = (state = initialState, action) => {
+  if (action.type === 'SET_LOADING') {
+    return {
+      ...state,
+      loading: action.value,
+    };
+  }
+  if (action.type === 'SET_NAME') {
+    return {
+      ...state,
+      name: 'Azzamy',
+    };
+  }
+  return state;
+};
+
+const store = createStore(reducer);
+
+export default store;

@@ -1,62 +1,59 @@
-import React from "react";
-import {useDispatch, useSelector} from "react-redux";
-import {GetPokemon} from "../actions";
-import _ from "lodash";
-import { View, Image } from "react-native";
+import React, {useState, useEffect} from 'react';
+import {View, Text, Image, StyleSheet, ActivityIndicator} from 'react-native';
 
-const Pokemon = (props) => {
-  const pokemonName = props.match.params.pokemon;
-  const dispatch = useDispatch();
-  const pokemonState = useSelector(state => state.Pokemon);
-  React.useEffect(() => {
-    dispatch(GetPokemon(pokemonName))
+const Details = props => {
+  const [details, setDetails] = useState([]);
+
+  useEffect(() => {
+    fetchPokemonDetails();
   }, []);
 
-  const ShowData = () => {
-    if (!_.isEmpty(pokemonState.data[pokemonName])) {
-      const pokeData = pokemonState.data[pokemonName];
-      return(
-        <View >
-          <View >
-            <View>Sprites</View>
-            <Image source={pokeData.sprites.front_default} alt=""/>
-            <Image source={pokeData.sprites.back_default} alt=""/>
-            <Image source={pokeData.sprites.front_shiny} alt=""/>
-            <Image source={pokeData.sprites.back_shiny} alt=""/>
-          </View>
-          <View >
-            <View>Stats</View>
-            {pokeData.stats.map(el => {
-              return <View>{el.stat.name} {el.base_stat}</View>
-            })}
-          </View>
-          <View >
-            <View>Abilities</View>
-            {pokeData.abilities.map(el => {
-              return <View>{el.ability.name}</View>
-            })}
-          </View>
-        </View>
-      )
-    }
+  const fetchPokemonDetails = () => {
+    const {state} = props.navigation;
+    fetch(`https://pokeapi.co/api/v2/pokemon/${state.params.pokemon}`)
+      .then(res => res.json())
+      .then(details => setDetails(details));
+  };
 
-    if (pokemonState.loading) {
-      return <View>Loading...</View>
-    }
-
-    if (pokemonState.errorMsg !== "") {
-      return <View>{pokemonState.errorMsg}</View>
-    }
-
-    return <View>error getting pokemon</View>
-  }
-
-  return(
-    <View >
-      <View>{pokemonName}</View>
-      {ShowData()}
+  return details.name ? (
+    <View style={{flex: 1, alignItems: 'center'}}>
+      <Image
+        style={styles.image}
+        source={{
+          uri: `https://img.pokemondb.net/sprites/omega-ruby-alpha-sapphire/dex/normal/${
+            details.name
+          }.png`,
+        }}
+      />
+      <Text style={styles.text}>Name: {details.name}</Text>
+      <Text style={styles.text}>Height: {details.height}</Text>
+      <Text style={styles.text}>Weight: {details.weight}</Text>
+      <Text style={styles.text}>
+        Ability: {details.abilities[0].ability.name}
+      </Text>
+      <Text style={styles.text}>Type: {details.types[0].type.name}</Text>
     </View>
-  )
+  ) : (
+    <View style={styles.indicator}>
+      <ActivityIndicator size="large" color="#E63F34" />
+    </View>
+  );
 };
 
-export default Pokemon
+export default Details;
+
+const styles = StyleSheet.create({
+  image: {
+    width: 200,
+    height: 200,
+  },
+  text: {
+    fontSize: 22,
+    marginBottom: 15,
+  },
+  indicator: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
